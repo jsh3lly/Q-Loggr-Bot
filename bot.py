@@ -24,9 +24,10 @@ fetchHelp = "1) Do '-q' to make groovy display the queue.\n" + \
             "CAUTION: Be sure noone texts on the chat during that time!"
 
 #very bad implementaion, code just works tho
-queuePages = ["sample"]
+
 @bot.command(name='fetch', help = fetchHelp)
 async def ok(ctx):
+    queuePages = ["sample"]
     messages = await ctx.channel.history(limit=2).flatten()         # list of last 2 messages
     queueMessage = messages[1]                                      # getting the second last message (the queue)
     userName = messages[0].author
