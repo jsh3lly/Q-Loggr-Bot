@@ -1,6 +1,8 @@
 import os
 import time
 
+import discord
+
 from functions import *
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -16,7 +18,7 @@ async def ok(ctx):
 
 fetchHelp = "1) Do '-q' to make groovy display the queue.\n" + \
             "2) Go to the first page of the queue by reacting.\n" +\
-            "3) When at first page, do 'qr fetchq and then wait for the bot to say 'ok'\n"+ \
+            "3) When at first page, do 'qr fetch' and then wait for the bot to say 'ok'\n"+ \
             "4) start going forward until the bot says 'ok', do this for all pagesuntil you reach the last page.\n" +\
             "5) The bot will automatically return a list of songs.\n"+\
             "CAUTION: Be sure noone texts on the chat during that time!"
@@ -27,9 +29,9 @@ queuePages = ["sample"]
 async def ok(ctx):
     messages = await ctx.channel.history(limit=2).flatten()         # list of last 2 messages
     queueMessage = messages[1]                                      # getting the second last message (the queue)
+    userName = messages[0].author
+    guildName = messages[0].guild
     queueMessageID = queueMessage.id                                # ID of the queue message
-
-
 
     """
     We check every 1/2 second if the queueMessage is different from the last message in queuePages. Obviously, for the first iteration ...
@@ -37,6 +39,8 @@ async def ok(ctx):
     ... message changes (but the ID remains the same). Now, after pressing "Next", the message would be different from the last ...
     ... element of queuePages, so we append. This implementation is very deliberate.
     """
+
+    pageNumber = 1
     while True:
         time.sleep(0.5)
 
@@ -69,15 +73,27 @@ async def ok(ctx):
             # See if this page is the last page, if yes, break
 
             queuePages.append(formattedMessage)
-            await ctx.send("ok")
+            await ctx.send(pageNumber)
+            pageNumber += 1
             if lastSentence == "This is the end of the queue!":
+                c = "All " + str(pageNumber) + " pages have been fetched!"
+                await ctx.send(c)
                 break
+    # getting rid of that "sample"
+    queuePages.pop(0)
+
 
     # printing to console the final parsed list.
     for item in queuePages:
-        if item == "sample":
-            continue
         print(item)
+    queueFileName = "queueFile_" + str(userName) + str(guildName) + ".txt"
+    queueFile = open(queueFileName, "w")
+    for item in queuePages:
+        queueFile.write(item)
+        queueFile.write("\n")
+    queueFile.close()
+    await ctx.send(file=discord.File(queueFileName))
+    os.remove(queueFileName)
 
     #embeds = [embed for embed in message.embeds]
     #while embeds:
