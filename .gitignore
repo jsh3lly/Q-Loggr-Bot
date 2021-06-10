@@ -2,3 +2,5 @@ __pycache__/
 .idea
 .env
 queueFile*
+client_secret*
+yt.py
