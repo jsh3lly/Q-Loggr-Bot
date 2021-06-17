@@ -2,12 +2,12 @@ import os
 import time
 
 import discord
-
-from functions import *
-import urllib.request
-import requests as req
 from discord.ext import commands
 from dotenv import load_dotenv
+
+from functions import *
+import yt
+
 from collections import OrderedDict
 
 def main():
@@ -120,7 +120,7 @@ def main():
         os.remove(queueFileName)
 
     @bot.command(name='makepl', help = "in progress")
-    async def makepl(ctx, name):
+    async def makepl(ctx, playlistName):
         lastTwoMessages = await ctx.channel.history(limit=2).flatten()  # currentPgListOfAllTracks of last 2 lastTwoMessages
         queueFile = lastTwoMessages[1]
         textFileAttachment = queueFile.attachments[0]
@@ -130,11 +130,12 @@ def main():
 
         listOfListOfTrackInfo = splitQueueFile(messageContent)
 
-        songAndArtistsString = ""
-        for trackInfo in listOfListOfTrackInfo:
-            songAndArtist = trackInfo[1]
-            songAndArtistsString += songAndArtist + "\n"
-        print(songAndArtistsString)
+        print(listOfListOfTrackInfo)
+
+        playlistURL = yt.main(playlistName, listOfListOfTrackInfo)
+        message = "The playlist URL is: " + playlistURL
+        await ctx.send(message)
+
     bot.run(TOKEN)
 
 if __name__ == '__main__':

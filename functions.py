@@ -2,10 +2,6 @@ def splitQueueFile(queueFileText):      # Returns listOfListOfTrackInfo
     listOfAllTracks = queueFileText.split("\n")
     listOfListOfTrackInfo = []
     for track in listOfAllTracks:
-
-
-
-
         serialNumberAndRemainingList = track.strip().split(")",1)
         serialNumber = serialNumberAndRemainingList[0]
         remaining = serialNumberAndRemainingList[1]
