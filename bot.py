@@ -6,9 +6,34 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from functions import *
-import yt
 
 from collections import OrderedDict
+
+#----------yt stuff----------
+import os
+
+import google_auth_oauthlib.flow
+import googleapiclient.discovery
+import googleapiclient.errors
+
+scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+
+
+from io import StringIO
+import sys
+#----------------------------
+
+# Not related to discord API or yt API but solves the general problem of capturing stdout from a function (very hacky workaround).
+class Capturing(list):
+    def __enter__(self):
+        self._stdout = sys.stdout
+        sys.stdout = self._stringio = StringIO()
+        return self
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        del self._stringio    # free up some memory
+        sys.stdout = self._stdout
+
 
 def main():
     load_dotenv()
@@ -130,13 +155,77 @@ def main():
 
         listOfListOfTrackInfo = splitQueueFile(messageContent)
 
-        print(listOfListOfTrackInfo)
+        # Disable OAuthlib's HTTPS verification when running locally.
+        # *DO NOT* leave this option enabled in production.
+        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-        playlistURL = yt.main(playlistName, listOfListOfTrackInfo)
+        api_service_name = "youtube"
+        api_version = "v3"
+        client_secrets_file = "client_secret_109750623328-t19vkl63gb2inph3apdr8vs9t2og3ujl.apps.googleusercontent.com.json"
+
+        # Get credentials and create an API client
+
+        flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+            client_secrets_file, scopes)
+
+
+        auth_url = flow.authorization_url()
+        await ctx.send('Please go to this URL: {}'.format(auth_url))
+        await ctx.send('After going to the URL, enter here the code u get and then the bot will proceed further, DO NOT ENTER ANYTHING ELSE OR THE BOT WILL BREAK!')
+
+        while True:
+            time.sleep(0.5)
+            codeMessage = await ctx.channel.history(limit=1).flatten()
+            codeMessage = codeMessage[0]
+            if codeMessage.author != ctx.author:
+                continue
+            codeMessage = codeMessage.content.strip()
+            break
+
+        flow.fetch_token(code=codeMessage)
+        credentials = flow.credentials()
+
+        youtube = googleapiclient.discovery.build(
+            api_service_name, api_version, credentials=credentials)
+
+        request = youtube.playlists().insert(
+            part="snippet,status",
+            body={
+                "snippet": {
+                    "title": playlistName,
+                    "description": "This is a sample playlist description.",
+                    "tags": [
+                        "sample playlist",
+                        "API call"
+                    ],
+                    "defaultLanguage": "en"
+                },
+                "status": {
+                    "privacyStatus": "public"
+                }
+            }
+        )
+        response = request.execute()
+
+        playlistID = response.get('id')
+
+        playlistURL = "https://www.youtube.com/playlist?list=" + playlistID
+        return playlistURL
+
+
+
+
         message = "The playlist URL is: " + playlistURL
         await ctx.send(message)
 
-    bot.run(TOKEN)
 
+
+
+
+
+
+
+
+    bot.run(TOKEN)
 if __name__ == '__main__':
     main()
