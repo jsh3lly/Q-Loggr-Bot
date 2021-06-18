@@ -211,7 +211,7 @@ def main():
 
         # ======== Searching and adding the songs to the playlist =========
 
-        for listOfTrackinfo in listOfListOfTrackInfo:
+        for listOfTrackinfo in listOfListOfTrackInfo[::-1]:   # Reversing the list cuz yt displays videos in "date added (newest)" form
 
             # ======== Searching ========
             songNameAndArtist = listOfTrackinfo[1]
