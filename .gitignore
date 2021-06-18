@@ -3,5 +3,6 @@ __pycache__/
 .env
 queueFile*
 client_secret*
+google-credentials.json
 yt.py
 test-code

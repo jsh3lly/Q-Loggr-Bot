@@ -161,7 +161,7 @@ def main():
 
         api_service_name = "youtube"
         api_version = "v3"
-        client_secrets_file = "client_secret_109750623328-t19vkl63gb2inph3apdr8vs9t2og3ujl.apps.googleusercontent.com.json"
+        client_secrets_file = "google-credentials.json"
 
         # Get credentials and create an API client
 
