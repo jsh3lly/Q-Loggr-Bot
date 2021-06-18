@@ -12,7 +12,7 @@ from collections import OrderedDict
 #----------yt stuff----------
 import os
 
-import google_auth_oauthlib.flow
+from google_auth_oauthlib.flow import Flow
 import googleapiclient.discovery
 import googleapiclient.errors
 
@@ -165,9 +165,7 @@ def main():
 
         # Get credentials and create an API client
 
-        flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-            client_secrets_file, scopes)
-
+        flow = Flow.from_client_secrets_file(client_secrets_file, scopes, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
         auth_url = flow.authorization_url()
         await ctx.send('Please go to this URL: {}'.format(auth_url))
@@ -183,11 +181,13 @@ def main():
             break
 
         flow.fetch_token(code=codeMessage)
-        credentials = flow.credentials()
+        credentials = flow.credentials
 
         youtube = googleapiclient.discovery.build(
             api_service_name, api_version, credentials=credentials)
 
+
+        # ============= Making the playlist =============
         request = youtube.playlists().insert(
             part="snippet,status",
             body={
@@ -209,22 +209,43 @@ def main():
 
         playlistID = response.get('id')
 
+        # ======== Searching and adding the songs to the playlist =========
+
+        for listOfTrackinfo in listOfListOfTrackInfo:
+
+            # ======== Searching ========
+            songNameAndArtist = listOfTrackinfo[1]
+
+            request = youtube.search().list(
+                part="snippet",
+                maxResults=1,
+                q=songNameAndArtist
+            )
+
+            response = request.execute()
+            videoID = response.get('items')[0].get('id').get('videoId')
+
+            # ======== Adding to playlist ========
+            request = youtube.playlistItems().insert(
+                part="snippet",
+                body={
+                    "snippet": {
+                        "playlistId": playlistID,
+                        "position": 0,
+                        "resourceId": {
+                            "kind": "youtube#video",
+                            "videoId": videoID
+                        }
+                    }
+                }
+            )
+
+            response = request.execute()
+
         playlistURL = "https://www.youtube.com/playlist?list=" + playlistID
-        return playlistURL
-
-
-
 
         message = "The playlist URL is: " + playlistURL
         await ctx.send(message)
-
-
-
-
-
-
-
-
 
     bot.run(TOKEN)
 if __name__ == '__main__':
