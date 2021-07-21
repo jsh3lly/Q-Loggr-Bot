@@ -44,6 +44,7 @@ def main():
         songLink = songLink.split(")")[0]
         songLink = "https" + songLink
         await user.send(songLink)
+        await ctx.message.add_reaction("👌")
 
     @bot.command(name='echoreply')
     async def echoreply(ctx):
