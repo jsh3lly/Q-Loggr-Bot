@@ -35,6 +35,16 @@ def main():
     #     currentPgQueueMessage = lastTwoMessages[1]                                      # getting the second last message (the queue)
     #     lastMessage = lastTwoMessages[0]                                                # getting the last message ("qr fetch")
 
+    @bot.command(name='save')
+    async def save(ctx):
+        message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        user = ctx.message.author
+        songLink = message.embeds[0].description
+        songLink = songLink.split("https")[1]
+        songLink = songLink.split(")")[0]
+        songLink = "https" + songLink
+        await user.send(songLink)
+
     @bot.command(name='echoreply')
     async def echoreply(ctx):
         message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
