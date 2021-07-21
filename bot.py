@@ -73,10 +73,10 @@ def main():
 
         pageNumber = 1
         while True:
-            """            cancelMessage = await ctx.channel.history(limit=1).flatten()
+            cancelMessage = await ctx.channel.history(limit=1).flatten()
             if cancelMessage[0].content == "cancel":
                 await ctx.send("Cancelling request")
-                return 0"""
+                return 0
             time.sleep(0.5)
             currentPgQueueMessage = await ctx.fetch_message(queueMessageID)
             currentPgQueueMessageContent = currentPgQueueMessage.content                       # fetch msg
@@ -175,6 +175,10 @@ def main():
         await ctx.send('After going to the URL, enter here the code u get and then the bot will proceed further, DO NOT ENTER ANYTHING ELSE OR THE BOT WILL BREAK!')
 
         while True:
+            cancelMessage = await ctx.channel.history(limit=1).flatten()
+            if cancelMessage[0].content == "cancel":
+                await ctx.send("Cancelling request")
+                return 0
             time.sleep(0.5)
             codeMessage = await ctx.channel.history(limit=1).flatten()
             codeMessage = codeMessage[0]
