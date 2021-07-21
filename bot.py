@@ -23,43 +23,43 @@ from io import StringIO
 import sys
 #----------------------------
 
-# Not related to discord API or yt API but solves the general problem of capturing stdout from a function (very hacky workaround).
-class Capturing(list):
-    def __enter__(self):
-        self._stdout = sys.stdout
-        sys.stdout = self._stringio = StringIO()
-        return self
-    def __exit__(self, *args):
-        self.extend(self._stringio.getvalue().splitlines())
-        del self._stringio    # free up some memory
-        sys.stdout = self._stdout
-
-
 def main():
     load_dotenv()
     TOKEN = os.getenv('DISCORD_TOKEN')
 
     bot = commands.Bot(command_prefix='qr ')
 
+    # @bot.command(name='fetchemo')
+    # async def fetchry(ctx):
+    #     lastTwoMessages = await ctx.channel.history(limit=2).flatten()                  # currentPgListOfAllTracks of last 2 lastTwoMessages
+    #     currentPgQueueMessage = lastTwoMessages[1]                                      # getting the second last message (the queue)
+    #     lastMessage = lastTwoMessages[0]                                                # getting the last message ("qr fetch")
+
+    @bot.command(name='echoreply')
+    async def echoreply(ctx):
+        message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        await ctx.send(message.content)
+
     @bot.command(name='ok', help = "haha huhu")
     async def ok(ctx):
         await ctx.send("ok")
 
     fetchHelp = "1) Do '-q' to make groovy display the queue.\n" + \
-                "2) Go to the first page of the queue by reacting.\n" +\
+                "2) Go to the first page of the queue by reacting.\n" + \
                 "3) When at first page, do 'qr fetch' and then wait for the bot to say 'ok'\n"+ \
-                "4) start going forward until the bot says 'ok', do this for all pagesuntil you reach the last page.\n" +\
-                "5) The bot will automatically return a list of songs.\n"+\
+                "4) start going forward until the bot says 'ok', do this for all pagesuntil you reach the last page.\n" + \
+                "5) The bot will automatically return a list of songs.\n"+ \
                 "CAUTION: Be sure noone texts on the chat during that time!"
 
     #very bad implementaion, code just works tho
-
     @bot.command(name='fetch', help = fetchHelp)
     async def fetch(ctx):
         listOfAllTracks = ["sample"]
-        lastTwoMessages = await ctx.channel.history(limit=2).flatten()                  # currentPgListOfAllTracks of last 2 lastTwoMessages
-        currentPgQueueMessage = lastTwoMessages[1]                                      # getting the second last message (the queue)
-        lastMessage = lastTwoMessages[0]                                                # getting the last message ("qr fetch")
+        """lastTwoMessages = await ctx.channel.history(limit=2).flatten()                  # currentPgListOfAllTracks of last 2 lastTwoMessages
+        currentPgQueueMessage = lastTwoMessages[1]                                      # getting the second last message (the queue)"""
+
+        currentPgQueueMessage = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        lastMessage = ctx.message                                                       # getting the last message ("qr fetch")
         userName = lastMessage.author                                                   # user who invoked the command
         guildName = lastMessage.guild                                                   # server on which the command was invoked
         queueMessageID = currentPgQueueMessage.id                                       # ID of the queue message
@@ -73,6 +73,10 @@ def main():
 
         pageNumber = 1
         while True:
+            """            cancelMessage = await ctx.channel.history(limit=1).flatten()
+            if cancelMessage[0].content == "cancel":
+                await ctx.send("Cancelling request")
+                return 0"""
             time.sleep(0.5)
             currentPgQueueMessage = await ctx.fetch_message(queueMessageID)
             currentPgQueueMessageContent = currentPgQueueMessage.content                       # fetch msg
@@ -146,8 +150,7 @@ def main():
 
     @bot.command(name='makepl', help = "in progress")
     async def makepl(ctx, playlistName):
-        lastTwoMessages = await ctx.channel.history(limit=2).flatten()  # currentPgListOfAllTracks of last 2 lastTwoMessages
-        queueFile = lastTwoMessages[1]
+        queueFile = await ctx.channel.fetch_message(ctx.message.reference.message_id)
         textFileAttachment = queueFile.attachments[0]
         messageFile = await textFileAttachment.read()
         messageContent = messageFile.decode("utf-8").strip()
