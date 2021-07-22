@@ -5,6 +5,7 @@ cachetools==4.2.2
 certifi==2021.5.30
 chardet==4.0.0
 charset-normalizer==2.0.3; python_version >= '3'
+discord-components==1.1.4
 discord.py==1.7.3
 discord==1.7.3
 google-api-core==1.31.0
@@ -14,7 +15,7 @@ google-auth-oauthlib==0.4.4
 google-auth==1.33.1
 googleapis-common-protos==1.53.0
 httplib2==0.19.1
-idna==3.2
+idna==3.2; python_version >= '3'
 multidict==5.1.0
 oauthlib==3.1.1
 packaging==21.0
