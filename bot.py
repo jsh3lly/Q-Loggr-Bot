@@ -1,16 +1,20 @@
 import os
 import time
 
-import discord
+import discord, asyncio
 from discord.ext import commands
+from discord_components import DiscordComponents, Button, ButtonStyle, InteractionType
+
 from dotenv import load_dotenv
 
 from functions import *
 
 from collections import OrderedDict
 
+from io import StringIO
+import sys
+
 #----------yt stuff----------
-import os
 
 from google_auth_oauthlib.flow import Flow
 import googleapiclient.discovery
@@ -19,21 +23,67 @@ import googleapiclient.errors
 scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 
 
-from io import StringIO
-import sys
+#----------embeds for help----------
+embedHelp = discord.Embed(
+    title = "Q-Loggr Help Portal", 
+    description = '''Please navigate to the help page for your desired command!\n 
+    For quick reference, here are the available commands :\n 
+    1. **qr save**  : Like a song and want to save it to your DMs? `qr save` it right away!
+    2. **qr fetch** : The queue has absolute bangers and you wanna queue songs the same way again ? `qr fetch` is at your rescue!
+    3. **qr makepl <playlistname>**: A convenient method to save the queue as a YouTube playlist. Do `qr makepl <playlistname>` to generate a playlist.\n'''
+     
+)
+embedSave = discord.Embed(
+    title = "Yeeting a song to your DMs",
+    description = '''This can be achieved via `qr save`.
+    **Steps:**
+    1. Do `-np` (for Groovy) or `.np` (for Hydra) to get the song which is currently playing
+    2. Reply to the message with `qr save`
+    3. Q-Loggr sends the song url to your DMs \n
+    **For this to work you need to have `Allow direct messages from server members` toggled on.**'''
+
+)
+embedFetch = discord.Embed(
+    title = "I can't get enough of this queue!",
+    description = '''`qr fetch` generates a text file of the current queue.
+    **Steps:**
+    1. Do `-q` to get the queue.
+    2. Go to the first page by reacting to `First` button.
+    3. Reply to the message with `qr fetch`.
+    4. Go forward using the `Next` button until you've reached the end of the queue.
+    5. Q-Loggr sends the text file of the queue in the channel.'''
+)
+embedPlayl = discord.Embed(
+    title = "This needs to be a YouTube playlist!",
+    description = '''`qr makepl <PlaylistName>` generates a YouTube playlist based on the text file generated.
+    **Steps:**
+    1. Generate the text file first using `qr fetch`
+    2. Reply to the generated text file with `qr makepl <PlaylistName>`
+    3. Wait for the bot to send an authentication link.
+    4. Sign-In using your Google Account to give permissions to the application to create a playlist.
+    5. Q-Loggr sends the generated playlist URL in channel.
+    **CAUTION !** `qr makepl` usage is limited to once a day for 65 songs or less.'''
+
+)
+#Getting all embeds in a list
+helpList = [embedHelp, embedSave, embedFetch, embedPlayl] 
+
+
 #----------------------------
 
 def main():
     load_dotenv()
     TOKEN = os.getenv('DISCORD_TOKEN')
 
-    bot = commands.Bot(command_prefix='qr ')
+    bot = commands.Bot(command_prefix='qr ',help_command=None)
+    DiscordComponents(bot)
 
-    # @bot.command(name='fetchemo')
-    # async def fetchry(ctx):
-    #     lastTwoMessages = await ctx.channel.history(limit=2).flatten()                  # currentPgListOfAllTracks of last 2 lastTwoMessages
-    #     currentPgQueueMessage = lastTwoMessages[1]                                      # getting the second last message (the queue)
-    #     lastMessage = lastTwoMessages[0]                                                # getting the last message ("qr fetch")
+    @bot.event
+    async def on_ready():
+        print('Logged in as')
+        print(bot.user.name)
+        print(bot.user.id)
+        print('------')
 
     @bot.command(name='save')
     async def save(ctx):
@@ -51,24 +101,128 @@ def main():
         await user.send(songLink)
         await ctx.message.add_reaction("👌")
 
-    @bot.command(name='echoreply')
-    async def echoreply(ctx):
-        message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-        await ctx.send(message.content)
+    # @bot.command(name='echoreply')
+    # async def echoreply(ctx):
+    #     message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+    #     await ctx.send(message.content)
 
-    @bot.command(name='ok', help = "haha huhu")
-    async def ok(ctx):
-        await ctx.send("ok")
+    # @bot.command(name='ok', help = "haha huhu")
+    # async def ok(ctx):
+    #     await ctx.send("ok")
 
-    fetchHelp = "1) Do '-q' to make groovy display the queue.\n" + \
-                "2) Go to the first page of the queue by reacting.\n" + \
-                "3) When at first page, do 'qr fetch' and then wait for the bot to say 'ok'\n"+ \
-                "4) start going forward until the bot says 'ok', do this for all pagesuntil you reach the last page.\n" + \
-                "5) The bot will automatically return a list of songs.\n"+ \
-                "CAUTION: Be sure noone texts on the chat during that time!"
+    # fetchHelp = "1) Do '-q' to make groovy display the queue.\n" + \
+    #             "2) Go to the first page of the queue by reacting.\n" + \
+    #             "3) When at first page, do 'qr fetch' and then wait for the bot to say 'ok'\n"+ \
+    #             "4) start going forward until the bot says 'ok', do this for all pagesuntil you reach the last page.\n" + \
+    #             "5) The bot will automatically return a list of songs.\n"+ \
+    #             "CAUTION: Be sure noone texts on the chat during that time!"
+
+
+
+
+    @bot.command(name = "help")
+    async def support(ctx):
+        #Set a default embed first
+        current = 0
+        mainMessage = await ctx.reply(
+            "**Support has arrived!**",
+            embed = helpList[current],
+            components = [
+                [
+                    Button(
+                        label = "Prev",
+                        id = "back",
+                        style = ButtonStyle.blue
+                    ),
+                    Button(
+                        label = f"Page {int(helpList.index(helpList[current])) + 1}/{len(helpList)}",
+                        id = "cur",
+                        style = ButtonStyle.grey,
+                        disabled = True
+                    ),
+                    Button(
+                        label = "Next",
+                        id = "front",
+                        style = ButtonStyle.blue
+                    )
+                ]
+            ]
+        )
+
+        while True:
+            #Try and except blocks to catch timeout and break
+            try:
+                interaction = await bot.wait_for(
+                    "button_click",
+                    check = lambda i: i.component.id in ["back", "front"],
+                    timeout = 60 #60 seconds of inactivity
+                )
+                #Getting the right list index
+                if interaction.component.id == "back":
+                    current -= 1
+                elif interaction.component.id == "front":
+                    current += 1
+                #If its out of index, go back to start / end
+                if current == len(helpList):
+                    current = 0
+                elif current < 0:
+                    current = len(helpList) - 1
+
+                #Edit to new page + the center counter
+                await interaction.respond(
+                    type = InteractionType.UpdateMessage,
+                    embed = helpList[current],
+                    components = [ 
+                        [
+                            Button(
+                                label = "Prev",
+                                id = "back",
+                                style = ButtonStyle.blue
+                            ),
+                            Button(
+                                label = f"Page {int(helpList.index(helpList[current])) + 1}/{len(helpList)}",
+                                id = "cur",
+                                style = ButtonStyle.grey,
+                                disabled = True
+                            ),
+                            Button(
+                                label = "Next",
+                                id = "front",
+                                style = ButtonStyle.blue
+                            )
+                        ]
+                    ]
+                )
+            except asyncio.TimeoutError:
+                #Disable and get outta here
+                await mainMessage.edit(
+                    components = [
+                        [
+                            Button(
+                                label = "Prev",
+                                id = "back",
+                                style = ButtonStyle.blue,
+                                disabled = True
+                            ),
+                            Button(
+                                label = f"Page {int(helpList.index(helpList[current])) + 1}/{len(helpList)}",
+                                id = "cur",
+                                style = ButtonStyle.grey,
+                                disabled = True
+                            ),
+                            Button(
+                                label = "Next",
+                                id = "front",
+                                style = ButtonStyle.blue,
+                                disabled = True
+                            )
+                        ]
+                    ]
+                )
+                break
 
     #very bad implementaion, code just works tho
-    @bot.command(name='fetch', help = fetchHelp)
+    @bot.command(name='fetch')
     async def fetch(ctx):
         listOfAllTracks = ["sample"]
         """lastTwoMessages = await ctx.channel.history(limit=2).flatten()                  # currentPgListOfAllTracks of last 2 lastTwoMessages
@@ -164,7 +318,7 @@ def main():
         await ctx.send(file=discord.File(queueFileName))
         os.remove(queueFileName)
 
-    @bot.command(name='makepl', help = "in progress")
+    @bot.command(name='makepl')
     async def makepl(ctx, playlistName):
         queueFile = await ctx.channel.fetch_message(ctx.message.reference.message_id)
         textFileAttachment = queueFile.attachments[0]
