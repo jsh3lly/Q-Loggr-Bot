@@ -141,7 +141,7 @@ def main():
                 interaction = await bot.wait_for(
                     "button_click",
                     check = lambda i: i.component.id in ["back", "front"],
-                    timeout = 60 #60 seconds of inactivity
+                    timeout = 60                                                #60 seconds of inactivity
                 )
                 #Getting the right list index
                 if interaction.component.id == "back":
@@ -317,8 +317,8 @@ def main():
         flow = Flow.from_client_secrets_file(client_secrets_file, scopes, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
         auth_url = flow.authorization_url()
-        await ctx.send('Please go to this URL: {}'.format(auth_url))
-        await ctx.send('After going to the URL, enter here the code u get and then the bot will proceed further, DO NOT ENTER ANYTHING ELSE OR THE BOT WILL BREAK!')
+        await ctx.send('Please go to the following URL:\n {}'.format(auth_url[0]))
+        replyToThisMessage = await ctx.send('After going to the URL, enter here the code u get and then the bot will proceed further, DO NOT ENTER ANYTHING ELSE OR THE BOT WILL BREAK!')
 
         while True:
             cancelMessage = await ctx.channel.history(limit=1).flatten()
