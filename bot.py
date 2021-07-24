@@ -106,20 +106,6 @@ def main():
     #     message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
     #     await ctx.send(message.content)
 
-    # @bot.command(name='ok', help = "haha huhu")
-    # async def ok(ctx):
-    #     await ctx.send("ok")
-
-    # fetchHelp = "1) Do '-q' to make groovy display the queue.\n" + \
-    #             "2) Go to the first page of the queue by reacting.\n" + \
-    #             "3) When at first page, do 'qr fetch' and then wait for the bot to say 'ok'\n"+ \
-    #             "4) start going forward until the bot says 'ok', do this for all pagesuntil you reach the last page.\n" + \
-    #             "5) The bot will automatically return a list of songs.\n"+ \
-    #             "CAUTION: Be sure noone texts on the chat during that time!"
-
-
-
-
     @bot.command(name = "help")
     async def support(ctx):
         #Set a default embed first
@@ -225,21 +211,11 @@ def main():
     @bot.command(name='fetch')
     async def fetch(ctx):
         listOfAllTracks = ["sample"]
-        """lastTwoMessages = await ctx.channel.history(limit=2).flatten()                  # currentPgListOfAllTracks of last 2 lastTwoMessages
-        currentPgQueueMessage = lastTwoMessages[1]                                      # getting the second last message (the queue)"""
-
         currentPgQueueMessage = await ctx.channel.fetch_message(ctx.message.reference.message_id)
         lastMessage = ctx.message                                                       # getting the last message ("qr fetch")
         userName = lastMessage.author                                                   # user who invoked the command
         guildName = lastMessage.guild                                                   # server on which the command was invoked
         queueMessageID = currentPgQueueMessage.id                                       # ID of the queue message
-
-        """
-        We check every 1/2 second if the currentPgQueueMessage is different from the last message in listOfAllTracks. Obviously, for the first iteration ...
-        ... the message would be different so it would be appended. Then the bot would say "ok" prompting you to press "Next" so the ...
-        ... message changes (but the ID remains the same). Now, after pressing "Next", the message would be different from the last ...
-        ... element of listOfAllTracks, so we append. This implementation is very deliberate.
-        """
 
         pageNumber = 1
         while True:
