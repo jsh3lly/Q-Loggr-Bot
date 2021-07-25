@@ -346,7 +346,7 @@ def main():
             body={
                 "snippet": {
                     "title": playlistName,
-                    "description": "This is a sample playlist description.",
+                    "description": "This is a playlist created by Q-Loggr. Star: https://github.com/StaticESC/Q-Loggr-Bot. Thank you.",
                     "tags": [
                         "sample playlist",
                         "API call"
