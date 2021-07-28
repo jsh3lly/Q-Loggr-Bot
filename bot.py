@@ -70,7 +70,7 @@ helpList = [embedHelp, embedSave, embedFetch, embedPlayl]
 
 
 #----------------------------
-# test commit text
+# test commit text /
 def main():
     load_dotenv()
     TOKEN = os.getenv('DISCORD_TOKEN')
