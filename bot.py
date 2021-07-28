@@ -1,4 +1,5 @@
 import os
+#import os.path
 import time
 
 import discord, asyncio
@@ -84,6 +85,7 @@ def main():
         print(bot.user.name)
         print(bot.user.id)
         print('------')
+        print(os.path.expanduser("~"))
 
     @bot.command(name='save')
     async def save(ctx):
