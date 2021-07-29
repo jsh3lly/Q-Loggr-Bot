@@ -98,7 +98,7 @@ def main():
         result = requests.get(query).text
         result = result.split("\n")
         for i in range(2, 5):
-            await ctx.message.send(result[i].strip())
+            await ctx.send(result[i].strip())
 
 
     @bot.command(name='save')
