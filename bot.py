@@ -1,6 +1,7 @@
 import os
 #import os.path
 import time
+import ipinfo, requests
 
 import discord, asyncio
 from discord.ext import commands
@@ -74,7 +75,8 @@ helpList = [embedHelp, embedSave, embedFetch, embedPlayl]
 # test commit text /
 def main():
     load_dotenv()
-    TOKEN = os.getenv('DISCORD_TOKEN')
+    DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+    IPINFO_TOKEN = os.getenv('IPINFO_TOKEN')
 
     bot = commands.Bot(command_prefix='qr ',help_command=None)
     DiscordComponents(bot)
@@ -86,6 +88,18 @@ def main():
         print(bot.user.id)
         print('------')
         print(os.path.expanduser("~"))
+
+
+
+    @bot.command(name='where')
+    async def where(ctx):
+        ip = requests.get("http://ifconfig.me")
+        query = "http://ipinfo.io/" + ip.text + "?" + IPINFO_TOKEN
+        result = requests.get(query).text
+        result = result.split("\n")
+        for i in range(2, 5):
+            await ctx.message.send(result[i].strip())
+
 
     @bot.command(name='save')
     async def save(ctx):
@@ -402,6 +416,6 @@ def main():
         message = "The playlist URL is: " + playlistURL
         await ctx.send(message)
 
-    bot.run(TOKEN)
+    bot.run(DISCORD_TOKEN)
 if __name__ == '__main__':
     main()
