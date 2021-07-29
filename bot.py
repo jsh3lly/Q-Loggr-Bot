@@ -97,8 +97,10 @@ def main():
         query = "http://ipinfo.io/" + ip.text + "?" + IPINFO_TOKEN
         result = requests.get(query).text
         result = result.split("\n")
+        newResult = ""
         for i in range(2, 5):
-            await ctx.send(result[i].strip())
+            newResult += result[i].strip() + "\n"
+        await ctx.send(newResult)
 
 
     @bot.command(name='save')
