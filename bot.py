@@ -13,8 +13,6 @@ from functions import *
 
 from collections import OrderedDict
 
-from io import StringIO
-import sys
 
 #----------yt stuff----------
 
