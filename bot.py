@@ -97,19 +97,22 @@ def main():
 
 
     @bot.command(name='save')
-    async def save(ctx):
-        message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+    async def save(ctx, messageSong = None):
         user = ctx.message.author
+        if messageSong == None:
+            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+            if ctx.message.reference.resolved.author.display_name == "Hydra":      #hydra
+                songLink = message.embeds[0].url
 
-        if ctx.message.reference.resolved.author.display_name == "Hydra":      #hydra
-            songLink = message.embeds[0].url
+            else:
+                songLink = message.embeds[0].description
+                songLink = songLink.split("https")[1]
+                songLink = songLink.split(")")[0]
+                songLink = "https" + songLink
+            await user.send(songLink)
 
         else:
-            songLink = message.embeds[0].description
-            songLink = songLink.split("https")[1]
-            songLink = songLink.split(")")[0]
-            songLink = "https" + songLink
-        await user.send(songLink)
+            await user.send(messageSong)
         await ctx.message.add_reaction("👌")
 
     
