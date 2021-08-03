@@ -279,21 +279,15 @@ def main():
 
         # As of now, the listOfAllTracks is a list of "blocks" of tracks, rather than actual tracks, has inconsistent whitespaces,  and may have some duplicates
 
-        # Flattening the list out:
+        # Flattening the list out and removing whitespaces:
         newListOfAllTracks = []
         for block in listOfAllTracks:
             tracks = block.split("\n")
             for track in tracks:
-                newListOfAllTracks.append(track)
+                newListOfAllTracks.append(track.strip())
 
         listOfAllTracks = newListOfAllTracks
         del newListOfAllTracks
-
-        # Consistent whitespaces:
-        for i in range(len(listOfAllTracks)):
-            strippedItem = listOfAllTracks[i].strip()
-            listOfAllTracks[i] = strippedItem
-
 
         # Removing duplicates
         listOfAllTracks = OrderedDict.fromkeys(listOfAllTracks)
