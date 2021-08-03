@@ -25,8 +25,9 @@ embedHelp = discord.Embed(
     For quick reference, here are the available commands :\n 
     1. **qr save**  : Like a song and want to save it to your DMs? `qr save` it right away!
     2. **qr fetch** : The queue has absolute bangers and you wanna queue songs the same way again ? `qr fetch` is at your rescue!
-    3. **qr makepl <playlistname>**: A convenient method to save the queue as a YouTube playlist. Do `qr makepl <playlistname>` to generate a playlist.\n'''
-     
+    3. **qr makepl <playlistname>**: A convenient method to save the queue as a YouTube playlist. Do `qr makepl <playlistname>` to generate a playlist.
+    4. **qr where** : Returns bot hosting details.\n'''
+
 )
 embedSave = discord.Embed(
     title = "Yeeting a song to your DMs",
