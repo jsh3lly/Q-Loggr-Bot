@@ -70,7 +70,7 @@ helpList = [embedHelp, embedSave, embedFetch, embedPlayl]
 
 
 #----------------------------
-# test commit text /
+
 def main():
     load_dotenv()
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
@@ -197,7 +197,7 @@ def main():
                 )
             except asyncio.TimeoutError:
                 #Disable and get outta here
-                await mainMessage.edit(
+                await mainMessage.edit("*This interaction has expired now*",
                     components = [
                         [
                             Button(
