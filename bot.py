@@ -90,14 +90,10 @@ def main():
 
     @bot.command(name='where')
     async def where(ctx):
-        ip = requests.get("http://ifconfig.me")
-        query = "http://ipinfo.io/" + ip.text + "?" + IPINFO_TOKEN
-        result = requests.get(query).text
-        result = result.split("\n")
-        newResult = ""
-        for i in range(2, 5):
-            newResult += result[i].strip() + "\n"
-        await ctx.send(newResult)
+        embed = discord.Embed(title="Server and Region Details for Q-Loggr", description="Know where the bot is hosted currently.",color=0x88EAFF) 
+        embed.add_field(name="Server ", value="you can make as much as fields you like to")
+        embed.set_footer(text="hello")
+        await ctx.send(embed=embed)
 
 
     @bot.command(name='save')
@@ -116,11 +112,7 @@ def main():
         await user.send(songLink)
         await ctx.message.add_reaction("👌")
 
-    # @bot.command(name='echoreply')
-    # async def echoreply(ctx):
-    #     message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-    #     await ctx.send(message.content)
-
+    
     @bot.command(name = "help")
     async def support(ctx):
         #Set a default embed first
