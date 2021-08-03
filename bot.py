@@ -1,16 +1,11 @@
 import os
-#import os.path
 import time
-import ipinfo, requests
-
+import ipinfo
 import discord, asyncio
 from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle, InteractionType
-
 from dotenv import load_dotenv
-
 from functions import *
-
 from collections import OrderedDict
 
 
@@ -30,8 +25,9 @@ embedHelp = discord.Embed(
     For quick reference, here are the available commands :\n 
     1. **qr save**  : Like a song and want to save it to your DMs? `qr save` it right away!
     2. **qr fetch** : The queue has absolute bangers and you wanna queue songs the same way again ? `qr fetch` is at your rescue!
-    3. **qr makepl <playlistname>**: A convenient method to save the queue as a YouTube playlist. Do `qr makepl <playlistname>` to generate a playlist.\n'''
-     
+    3. **qr makepl <playlistname>**: A convenient method to save the queue as a YouTube playlist. Do `qr makepl <playlistname>` to generate a playlist.
+    4. **qr where** : Returns bot hosting details.\n'''
+
 )
 embedSave = discord.Embed(
     title = "Yeeting a song to your DMs",
@@ -65,12 +61,20 @@ embedPlayl = discord.Embed(
     **CAUTION !** `qr makepl` usage is limited to once a day for 65 songs or less.'''
 
 )
+embedWhere = discord.Embed(
+    title = "Where is this bot hosted?",
+    description = '''`qr where` provides basic information on Q-Loggr's current host and region details.
+    **Steps:**
+    1. Do qr where to access details.
+    NOTE: This is supposed to be a utility command and spamming the command will lead to API ratelimit for ipinfo. '''
+)
+
 #Getting all embeds in a list
-helpList = [embedHelp, embedSave, embedFetch, embedPlayl] 
+helpList = [embedHelp, embedSave, embedFetch, embedPlayl,embedWhere] 
 
 
 #----------------------------
-# test commit text /
+
 def main():
     load_dotenv()
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
@@ -91,14 +95,20 @@ def main():
 
     @bot.command(name='where')
     async def where(ctx):
-        ip = requests.get("http://ifconfig.me")
-        query = "http://ipinfo.io/" + ip.text + "?" + IPINFO_TOKEN
-        result = requests.get(query).text
-        result = result.split("\n")
-        newResult = ""
-        for i in range(2, 5):
-            newResult += result[i].strip() + "\n"
-        await ctx.send(newResult)
+        access_token = os.getenv('IPINFO_TOKEN')
+        handler = ipinfo.getHandler(access_token)
+        details = handler.getDetails()
+        
+        embed = discord.Embed(title="Server and Region Details for Q-Loggr", description="Know where the bot is hosted currently.",color=0x88EAFF) 
+        embed.add_field(name="Organisation Name", value=details.org)
+        try:
+            embed.add_field(name="Host", value=details.hostname)
+        except AttributeError:
+            embed.add_field(name="Host", value="localhost")
+        embed.add_field(name="City", value=details.city)
+        embed.add_field(name="Country", value=details.country_name)
+        embed.set_footer(text="Q-Loggr Utility")
+        await ctx.send(embed=embed)
 
 
     @bot.command(name='save')
@@ -120,11 +130,7 @@ def main():
             await user.send(messageSong)
         await ctx.message.add_reaction("👌")
 
-    # @bot.command(name='echoreply')
-    # async def echoreply(ctx):
-    #     message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-    #     await ctx.send(message.content)
-
+    
     @bot.command(name = "help")
     async def support(ctx):
         #Set a default embed first
@@ -200,7 +206,7 @@ def main():
                 )
             except asyncio.TimeoutError:
                 #Disable and get outta here
-                await mainMessage.edit(
+                await mainMessage.edit("*This interaction has expired now*",
                     components = [
                         [
                             Button(
@@ -283,21 +289,15 @@ def main():
 
         # As of now, the listOfAllTracks is a list of "blocks" of tracks, rather than actual tracks, has inconsistent whitespaces,  and may have some duplicates
 
-        # Flattening the list out:
+        # Flattening the list out and removing whitespaces:
         newListOfAllTracks = []
         for block in listOfAllTracks:
             tracks = block.split("\n")
             for track in tracks:
-                newListOfAllTracks.append(track)
+                newListOfAllTracks.append(track.strip())
 
         listOfAllTracks = newListOfAllTracks
         del newListOfAllTracks
-
-        # Consistent whitespaces:
-        for i in range(len(listOfAllTracks)):
-            strippedItem = listOfAllTracks[i].strip()
-            listOfAllTracks[i] = strippedItem
-
 
         # Removing duplicates
         listOfAllTracks = OrderedDict.fromkeys(listOfAllTracks)
