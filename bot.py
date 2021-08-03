@@ -1,15 +1,11 @@
 import os
 import time
-import ipinfo, requests
-
+import ipinfo
 import discord, asyncio
 from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle, InteractionType
-
 from dotenv import load_dotenv
-
 from functions import *
-
 from collections import OrderedDict
 
 
@@ -64,8 +60,16 @@ embedPlayl = discord.Embed(
     **CAUTION !** `qr makepl` usage is limited to once a day for 65 songs or less.'''
 
 )
+embedWhere = discord.Embed(
+    title = "Where is this bot hosted?",
+    description = '''`qr where` provides basic information on Q-Loggr's current host and region details.
+    **Steps:**
+    1. Do qr where to access details.
+    NOTE: This is supposed to be a utility command and spamming the command will lead to API ratelimit for ipinfo. '''
+)
+
 #Getting all embeds in a list
-helpList = [embedHelp, embedSave, embedFetch, embedPlayl] 
+helpList = [embedHelp, embedSave, embedFetch, embedPlayl,embedWhere] 
 
 
 #----------------------------
