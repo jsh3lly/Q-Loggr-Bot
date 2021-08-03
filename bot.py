@@ -90,9 +90,19 @@ def main():
 
     @bot.command(name='where')
     async def where(ctx):
+        access_token = os.getenv('IPINFO_TOKEN')
+        handler = ipinfo.getHandler(access_token)
+        details = handler.getDetails()
+        
         embed = discord.Embed(title="Server and Region Details for Q-Loggr", description="Know where the bot is hosted currently.",color=0x88EAFF) 
-        embed.add_field(name="Server ", value="you can make as much as fields you like to")
-        embed.set_footer(text="hello")
+        embed.add_field(name="Organisation Name", value=details.org)
+        try:
+            embed.add_field(name="Host", value=details.hostname)
+        except AttributeError:
+            embed.add_field(name="Host", value="localhost")
+        embed.add_field(name="City", value=details.city)
+        embed.add_field(name="Country", value=details.country_name)
+        embed.set_footer(text="Q-Loggr Utility")
         await ctx.send(embed=embed)
 
 
