@@ -319,7 +319,7 @@ def main():
         textFileAttachment = queueFile.attachments[0]
         messageFile = await textFileAttachment.read()
         messageContent = messageFile.decode("utf-8").strip()
-
+        user=ctx.author
 
         listOfListOfTrackInfo = splitQueueFile(messageContent)
 
@@ -336,87 +336,102 @@ def main():
         flow = Flow.from_client_secrets_file(client_secrets_file, scopes, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
         auth_url = flow.authorization_url()
-        await ctx.send('Please go to the following URL:\n {}'.format(auth_url[0]))
-        replyToThisMessage = await ctx.send('After going to the URL, enter here the code u get and then the bot will proceed further, DO NOT ENTER ANYTHING ELSE OR THE BOT WILL BREAK!')
+        
+        stringo=auth_url[0]
+        embed = discord.Embed(title="OAuth Verification Embed", description="Please go to the following URL:",color=0x34A853) 
+        embed.add_field(name="OAuth Link", value="[Click Here]({})".format(stringo))
+        embed.add_field(name="Made a mistake?", value="Type `cancel` to invalidate the OAuth process.")
+        embed.set_footer(text="OAuth Embed generated for {}".format(user))
+        
+        await ctx.send("{} check your DMs!".format(user.mention))
+        await user.send(embed=embed)
+        # await user.send('Please go to the following URL:\n {}'.format(stringo))
+        # await user.send('After going to the URL, enter here the code u get and then the bot will proceed further, DO NOT ENTER ANYTHING ELSE OR THE BOT WILL BREAK!')
+        
+        
+        def check(mssg):
+            return mssg.author==ctx.message.author
+
 
         while True:
-            cancelMessage = await ctx.channel.history(limit=1).flatten()
-            if cancelMessage[0].content == "cancel":
-                await ctx.send("Cancelling request")
+            # cancelMessage = await user.wait_for(limit=1).flatten()
+            # if cancelMessage[0].content == "cancel":
+            msg = await bot.wait_for("message",check=check)
+            if 'cancel' in  msg.content.lower():
+                await user.send("Cancelling request")
                 return 0
             time.sleep(0.5)
-            codeMessage = await ctx.channel.history(limit=1).flatten()
-            codeMessage = codeMessage[0]
-            if codeMessage.author != ctx.author:
-                continue
-            codeMessage = codeMessage.content.strip()
+            codeMessage = msg.content
             break
+        
+        
+        async with ctx.typing():
 
-        flow.fetch_token(code=codeMessage)
-        credentials = flow.credentials
+            flow.fetch_token(code=codeMessage)
+            credentials = flow.credentials
 
-        youtube = googleapiclient.discovery.build(
-            api_service_name, api_version, credentials=credentials)
+            youtube = googleapiclient.discovery.build(
+                api_service_name, api_version, credentials=credentials)
 
-
-        # ============= Making the playlist =============
-        request = youtube.playlists().insert(
-            part="snippet,status",
-            body={
-                "snippet": {
-                    "title": playlistName,
-                    "description": "This is a playlist created by Q-Loggr. Star: https://github.com/StaticESC/Q-Loggr-Bot. Thank you.",
-                    "tags": [
-                        "sample playlist",
-                        "API call"
-                    ],
-                    "defaultLanguage": "en"
-                },
-                "status": {
-                    "privacyStatus": "public"
-                }
-            }
-        )
-        response = request.execute()
-
-        playlistID = response.get('id')
-
-        # ======== Searching and adding the songs to the playlist =========
-
-        for listOfTrackinfo in listOfListOfTrackInfo[::-1]:   # Reversing the list cuz yt displays videos in "date added (newest)" form
-
-            # ======== Searching ========
-            songNameAndArtist = listOfTrackinfo[1]
-
-            request = youtube.search().list(
-                part="snippet",
-                maxResults=1,
-                q=songNameAndArtist
-            )
-
-            response = request.execute()
-            videoID = response.get('items')[0].get('id').get('videoId')
-
-            # ======== Adding to playlist ========
-            request = youtube.playlistItems().insert(
-                part="snippet",
+            # ============= Making the playlist =============
+            request = youtube.playlists().insert(
+                part="snippet,status",
                 body={
                     "snippet": {
-                        "playlistId": playlistID,
-                        "position": 0,
-                        "resourceId": {
-                            "kind": "youtube#video",
-                            "videoId": videoID
-                        }
+                        "title": playlistName,
+                        "description": "This is a playlist created by Q-Loggr. Star: https://github.com/StaticESC/Q-Loggr-Bot. Thank you.",
+                        "tags": [
+                            "sample playlist",
+                            "API call"
+                        ],
+                        "defaultLanguage": "en"
+                    },
+                    "status": {
+                        "privacyStatus": "public"
                     }
                 }
             )
-
             response = request.execute()
 
-        playlistURL = "https://www.youtube.com/playlist?list=" + playlistID
+            playlistID = response.get('id')
 
-        message = "The playlist URL is: " + playlistURL
+            # ======== Searching and adding the songs to the playlist =========
+
+            for listOfTrackinfo in listOfListOfTrackInfo[::-1]:   # Reversing the list cuz yt displays videos in "date added (newest)" form
+
+                # ======== Searching ========
+                songNameAndArtist = listOfTrackinfo[1]
+
+                request = youtube.search().list(
+                    part="snippet",
+                    maxResults=1,
+                    q=songNameAndArtist
+                )
+
+                response = request.execute()
+                videoID = response.get('items')[0].get('id').get('videoId')
+
+                # ======== Adding to playlist ========
+                request = youtube.playlistItems().insert(
+                    part="snippet",
+                    body={
+                        "snippet": {
+                            "playlistId": playlistID,
+                            "position": 0,
+                            "resourceId": {
+                                "kind": "youtube#video",
+                                "videoId": videoID
+                            }
+                        }
+                    }
+                )
+
+                response = request.execute()
+                playlistURL = "https://www.youtube.com/playlist?list=" + playlistID
+
+                message = "The playlist URL is: " + playlistURL
+        
+            
         await ctx.send(message)
 
     bot.run(DISCORD_TOKEN)
