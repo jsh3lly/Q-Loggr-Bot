@@ -55,7 +55,7 @@ embedPlayl = discord.Embed(
     **Steps:**
     1. Generate the text file first using `qr fetch`
     2. Reply to the generated text file with `qr makepl <PlaylistName>`
-    3. Wait for the bot to send an authentication link.
+    3. Wait for the bot to send an authentication link in your DM **Make sure** `Allow Direct Messages from Server Members` **IS TURNED ON.**
     4. Sign-In using your Google Account to give permissions to the application to create a playlist.
     5. Q-Loggr sends the generated playlist URL in channel.
     **CAUTION !** `qr makepl` usage is limited to once a day for 65 songs or less.'''
@@ -114,22 +114,30 @@ def main():
     @bot.command(name='save')
     async def save(ctx, messageSong = None):
         user = ctx.message.author
-        if messageSong == None:
-            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-            if ctx.message.reference.resolved.author.display_name == "Hydra":      #hydra
-                songLink = message.embeds[0].url
+        try:
+            if messageSong == None:
+                message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+                if ctx.message.reference.resolved.author.display_name == "Hydra":      #hydra
+                    songLink = message.embeds[0].url
+
+                else:
+                    songLink = message.embeds[0].description
+                    songLink = songLink.split("https")[1]
+                    songLink = songLink.split(")")[0]
+                    songLink = "https" + songLink
+                await user.send(songLink)
 
             else:
-                songLink = message.embeds[0].description
-                songLink = songLink.split("https")[1]
-                songLink = songLink.split(")")[0]
-                songLink = "https" + songLink
-            await user.send(songLink)
+                await user.send(messageSong)
+            await ctx.message.add_reaction("👌")
 
-        else:
-            await user.send(messageSong)
-        await ctx.message.add_reaction("👌")
+        except discord.errors.Forbidden: #check if DM Closed
 
+            embed = discord.Embed(title="UH OH!", description="Looks like I'm unable to send you a Direct Message :(",color=0xFF0000) 
+            embed.add_field(name="NOTE",value="**Make sure this is turned on so that the bot is able to DM you!**",inline=True)
+            embed.set_image(url="https://support.discord.com/hc/article_attachments/360062973031/Screen_Shot_2020-07-24_at_10.46.47_AM.png")
+            embed.set_footer(text="Embed Support for Discord errors")
+            await ctx.send(user.mention,embed=embed)
     
     @bot.command(name = "help")
     async def support(ctx):
@@ -340,30 +348,33 @@ def main():
         stringo=auth_url[0]
         embed = discord.Embed(title="OAuth Verification Embed", description="Please go to the following URL:",color=0x34A853) 
         embed.add_field(name="OAuth Link", value="[Click Here]({})".format(stringo))
+        embed.add_field(name="Instructions", value="Sign-In to your Google Account and paste the token here (obtained after authorising the bot to modify your Youtube data)")
         embed.add_field(name="Made a mistake?", value="Type `cancel` to invalidate the OAuth process.")
         embed.set_footer(text="OAuth Embed generated for {}".format(user))
         
-        await ctx.send("{} check your DMs!".format(user.mention))
-        await user.send(embed=embed)
-        # await user.send('Please go to the following URL:\n {}'.format(stringo))
-        # await user.send('After going to the URL, enter here the code u get and then the bot will proceed further, DO NOT ENTER ANYTHING ELSE OR THE BOT WILL BREAK!')
-        
-        
-        def check(mssg):
-            return mssg.author==ctx.message.author
+        try:
+            await user.send(embed=embed)
+            await ctx.send("{} check your DMs!".format(user.mention))
+            def check(mssg):
+                return mssg.author==ctx.message.author
 
 
-        while True:
-            # cancelMessage = await user.wait_for(limit=1).flatten()
-            # if cancelMessage[0].content == "cancel":
-            msg = await bot.wait_for("message",check=check)
-            if 'cancel' in  msg.content.lower():
-                await user.send("Cancelling request")
-                return 0
-            time.sleep(0.5)
-            codeMessage = msg.content
-            break
-        
+            while True:
+                msg = await bot.wait_for("message",check=check)
+                if 'cancel' in  msg.content.lower():
+                    await user.send("Cancelling request")
+                    return 0
+                time.sleep(0.5)
+                codeMessage = msg.content
+                break
+
+        except discord.errors.Forbidden: #check if DM Closed
+            embed = discord.Embed(title="UH OH!", description="Looks like I'm unable to send you a Direct Message :(",color=0xFF0000) 
+            embed.add_field(name="NOTE",value="**Make sure this is turned on so that the bot is able to DM you!**",inline=True)
+            embed.set_image(url="https://support.discord.com/hc/article_attachments/360062973031/Screen_Shot_2020-07-24_at_10.46.47_AM.png")
+            embed.set_footer(text="Embed Support for Discord errors")
+            await ctx.send(user.mention,embed=embed)
+    
         
         async with ctx.typing():
 
