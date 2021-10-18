@@ -52,10 +52,15 @@ class ImageCog(commands.Cog):
 
     @staticmethod
     def imgen(delta1, delta2, title: str, artist: str, album: str, image_bytes: bytes) -> BytesIO:
-        myFont2 = ImageFont.truetype("assets/code2000.ttf", 28)
-        myFont1 = ImageFont.truetype("assets/code2000.ttf", 41)
+        
+        
         myFont3 = ImageFont.truetype("assets/Roboto-Regular.ttf", 19)
-
+        if title.isascii==False or album.isascii==False or artist.isascii==False:
+            myFont2 = ImageFont.truetype("assets/code2000.ttf", 28)
+            myFont1 = ImageFont.truetype("assets/code2000.ttf", 41)
+        else:
+            myFont1 = ImageFont.truetype("assets/Roboto-Regular.ttf", 41)
+            myFont2 = ImageFont.truetype("assets/Roboto-Regular.ttf", 28)
         m1 = divmod(delta1.seconds, 60)
         m2 = divmod(delta2.seconds, 60)
         # we must use BytesIO to load the image here as PIL expects a stream instead of
@@ -139,13 +144,12 @@ class ImageCog(commands.Cog):
                             style=ButtonStyle.URL, 
                             label="Play On Spotify", 
                             url=spoturl)])
-
+                    break    
             else:
 
                 spotify = discord.Embed(
                     title="Uh Oh!",
-                    description='''Looks like you aren't listening to **Spotify <:spotify:887426366818115585>** 
-                        right now.Perhaps [give it a shot?](https://www.spotify.com/)''',
+                    description='''Looks like you aren't listening to **Spotify <:spotify:887426366818115585>** right now.Perhaps [give it a shot?](https://www.spotify.com/)''',
                     timestamp=datetime.datetime.now(),
                     colour=discord.Colour.gold(),
                 ).set_footer(
