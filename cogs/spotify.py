@@ -1,5 +1,4 @@
 import discord
-from discord import embeds
 from discord.ext import commands
 import aiohttp
 import datetime
@@ -12,9 +11,6 @@ from io import BytesIO
 from discord_components import (
     Button,
     ButtonStyle,
-    Select,
-    SelectOption,
-    interaction,
 )
 
 
@@ -30,39 +26,22 @@ class ImageCog(commands.Cog):
 
         return image_bytes
 
-    # @commands.command(name='slect')
-    # async def select(self, ctx):
-    #     async def callback(interaction):
-    #         await interaction.send(content="Yay")
-
-    #     await ctx.send(
-    #         "Select callbacks!",
-    #         components=[
-    #             self.bot.components_manager.add_callback(
-    #                 Select(
-    #                     options=[
-    #                         SelectOption(label="a", value="a"),
-    #                         SelectOption(label="b", value="b"),
-    #                     ],
-    #                 ),
-    #                 callback,
-    #             )
-    #         ],
-    #     )
-
     @staticmethod
     def imgen(delta1, delta2, title: str, artist: str, album: str, image_bytes: bytes) -> BytesIO:
         
         
         myFont3 = ImageFont.truetype("assets/Roboto-Regular.ttf", 19)
+        
         if title.isascii==False or album.isascii==False or artist.isascii==False:
             myFont2 = ImageFont.truetype("assets/code2000.ttf", 28)
             myFont1 = ImageFont.truetype("assets/code2000.ttf", 41)
         else:
             myFont1 = ImageFont.truetype("assets/Roboto-Regular.ttf", 41)
             myFont2 = ImageFont.truetype("assets/Roboto-Regular.ttf", 28)
+        
         m1 = divmod(delta1.seconds, 60)
         m2 = divmod(delta2.seconds, 60)
+        
         # we must use BytesIO to load the image here as PIL expects a stream instead of
         # just raw bytes.
         with Image.open(BytesIO(image_bytes)) as im:
@@ -76,8 +55,7 @@ class ImageCog(commands.Cog):
                     title[:23]), font=myFont1, fill="#befe00")
 
                 #artist and album
-                # draw.text((303, 99), "{}".format(str((artist))), font=myFont2, fill="#FFFFFF")
-                draw.text((303, 99), fr"{artist[:33]}",
+                draw.text((303, 99), "{}".format(artist[:33]),
                           font=myFont2, fill="#FFFFFF")
                 draw.text((303, 147), "{}".format(
                     album[:33]), font=myFont2, fill="#FFFFFF")
@@ -149,12 +127,11 @@ class ImageCog(commands.Cog):
 
                 spotify = discord.Embed(
                     title="Uh Oh!",
-                    description='''Looks like you aren't listening to **Spotify <:spotify:887426366818115585>** right now.Perhaps [give it a shot?](https://www.spotify.com/)''',
-                    timestamp=datetime.datetime.now(),
-                    colour=discord.Colour.gold(),
-                ).set_footer(
-                    text="Note that this command is a bit broken so just live with it."
-                )
+                description="Looks like {} isn't listening to **Spotify <:spotify:887426366818115585>** right now. \nPerhaps [give it a shot?](https://www.spotify.com/)".format(user),
+                colour=discord.Colour.gold(),
+            ).set_footer(
+                text="Q-Loggr Bot"
+            )
 
                 await ctx.reply(embed=spotify)
 
@@ -162,11 +139,10 @@ class ImageCog(commands.Cog):
 
             spotify = discord.Embed(
                 title="Uh Oh!",
-                description="Looks like you aren't listening to **Spotify <:spotify:887426366818115585>** right now. Perhaps [give it a shot?](https://www.spotify.com/)",
-                timestamp=datetime.datetime.now(),
+                description="Looks like {} isn't listening to **Spotify <:spotify:887426366818115585>** right now. \nPerhaps [give it a shot?](https://www.spotify.com/)".format(user),
                 colour=discord.Colour.gold(),
             ).set_footer(
-                text="Note that this command is a bit broken so just live with it."
+                text="Q-Loggr Bot"
             )
 
             await ctx.reply(embed=spotify)
