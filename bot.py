@@ -1,15 +1,16 @@
+from datetime import datetime
 import os
 import time
-import ipinfo
-import discord, asyncio
+import discord
+import asyncio
 from discord.ext import commands
-from discord_components import DiscordComponents, Button, ButtonStyle, InteractionType
+from discord_components import DiscordComponents, Button, ButtonStyle
 from dotenv import load_dotenv
 from functions import *
 from collections import OrderedDict
+from embeds import helpList
 
-
-#----------yt stuff----------
+# ----------yt stuff----------
 
 from google_auth_oauthlib.flow import Flow
 import googleapiclient.discovery
@@ -18,70 +19,18 @@ import googleapiclient.errors
 scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 
 
-#----------embeds for help----------
-embedHelp = discord.Embed(
-    title = "Q-Loggr Help Portal", 
-    description = '''Please navigate to the help page for your desired command!\n 
-    For quick reference, here are the available commands :\n 
-    1. **qr save**  : Like a song and want to save it to your DMs? `qr save` it right away!
-    2. **qr fetch** : The queue has absolute bangers and you wanna queue songs the same way again ? `qr fetch` is at your rescue!
-    3. **qr makepl <playlistname>**: A convenient method to save the queue as a YouTube playlist. Do `qr makepl <playlistname>` to generate a playlist.
-    4. **qr where** : Returns bot hosting details.\n'''
-
-)
-embedSave = discord.Embed(
-    title = "Yeeting a song to your DMs",
-    description = '''This can be achieved via `qr save`.
-    **Steps:**
-    1. Do `-np` (for Groovy) or `.np` (for Hydra) to get the song which is currently playing
-    2. Reply to the message with `qr save`
-    3. Q-Loggr sends the song url to your DMs \n
-    **For this to work you need to have `Allow direct messages from server members` toggled on.**'''
-
-)
-embedFetch = discord.Embed(
-    title = "I can't get enough of this queue!",
-    description = '''`qr fetch` generates a text file of the current queue.
-    **Steps:**
-    1. Do `-q` to get the queue.
-    2. Go to the first page by reacting to `First` button.
-    3. Reply to the message with `qr fetch`.
-    4. Go forward using the `Next` button until you've reached the end of the queue.
-    5. Q-Loggr sends the text file of the queue in the channel.'''
-)
-embedPlayl = discord.Embed(
-    title = "This needs to be a YouTube playlist!",
-    description = '''`qr makepl <PlaylistName>` generates a YouTube playlist based on the text file generated.
-    **Steps:**
-    1. Generate the text file first using `qr fetch`
-    2. Reply to the generated text file with `qr makepl <PlaylistName>`
-    3. Wait for the bot to send an authentication link in your DM **Make sure** `Allow Direct Messages from Server Members` **IS TURNED ON.**
-    4. Sign-In using your Google Account to give permissions to the application to create a playlist.
-    5. Q-Loggr sends the generated playlist URL in channel.
-    **CAUTION !** `qr makepl` usage is limited to once a day for 65 songs or less.'''
-
-)
-embedWhere = discord.Embed(
-    title = "Where is this bot hosted?",
-    description = '''`qr where` provides basic information on Q-Loggr's current host and region details.
-    **Steps:**
-    1. Do qr where to access details.
-    NOTE: This is supposed to be a utility command and spamming the command will lead to API ratelimit for ipinfo. '''
-)
-
-#Getting all embeds in a list
-helpList = [embedHelp, embedSave, embedFetch, embedPlayl,embedWhere] 
-
-
-#----------------------------
 
 def main():
     load_dotenv()
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-    IPINFO_TOKEN = os.getenv('IPINFO_TOKEN')
-
-    bot = commands.Bot(command_prefix='qr ',help_command=None)
+    intents = discord.Intents.all()
+    bot = commands.Bot(command_prefix='qr ',intents=intents,status=discord.Status.dnd,activity=discord.Game("with my source code 😳"), help_command=None)
+    
     DiscordComponents(bot)
+
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py'):
+            bot.load_extension(f'cogs.{filename[:-3]}')
 
     @bot.event
     async def on_ready():
@@ -90,34 +39,23 @@ def main():
         print(bot.user.id)
         print('------')
         print(os.path.expanduser("~"))
+    bot.launch_time=datetime.utcnow()
 
-
-
-    @bot.command(name='where')
-    async def where(ctx):
-        access_token = os.getenv('IPINFO_TOKEN')
-        handler = ipinfo.getHandler(access_token)
-        details = handler.getDetails()
-        
-        embed = discord.Embed(title="Server and Region Details for Q-Loggr", description="Know where the bot is hosted currently.",color=0x88EAFF) 
-        embed.add_field(name="Organisation Name", value=details.org)
-        try:
-            embed.add_field(name="Host", value=details.hostname)
-        except AttributeError:
-            embed.add_field(name="Host", value="localhost")
-        embed.add_field(name="City", value=details.city)
-        embed.add_field(name="Country", value=details.country_name)
-        embed.set_footer(text="Q-Loggr Utility")
-        await ctx.send(embed=embed)
-
+    @bot.command(name='uptime')
+    async def uptime(ctx):
+        delta_uptime=datetime.utcnow()-bot.launch_time
+        h,r=divmod(delta_uptime.total_seconds(),3600)
+        m,s=divmod(r,60)
+        d,h=divmod(h,24)
+        await ctx.reply(f'{int(d)}days, {int(h)} hours, {int(m)} minutes, {int(s)} seconds have elapsed since starting the bot.')
 
     @bot.command(name='save')
-    async def save(ctx, messageSong = None):
+    async def save(ctx, messageSong=None):
         user = ctx.message.author
         try:
             if messageSong == None:
                 message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-                if ctx.message.reference.resolved.author.display_name == "Hydra":      #hydra
+                if ctx.message.reference.resolved.author.display_name == "Hydra":  # hydra
                     songLink = message.embeds[0].url
 
                 else:
@@ -131,124 +69,131 @@ def main():
                 await user.send(messageSong)
             await ctx.message.add_reaction("👌")
 
-        except discord.errors.Forbidden: #check if DM Closed
+        except discord.errors.Forbidden:  # check if DM Closed
 
-            embed = discord.Embed(title="UH OH!", description="Looks like I'm unable to send you a Direct Message :(",color=0xFF0000) 
-            embed.add_field(name="NOTE",value="**Make sure this is turned on so that the bot is able to DM you!**",inline=True)
-            embed.set_image(url="https://support.discord.com/hc/article_attachments/360062973031/Screen_Shot_2020-07-24_at_10.46.47_AM.png")
+            embed = discord.Embed(
+                title="UH OH!", description="Looks like I'm unable to send you a Direct Message :(", color=0xFF0000)
+            embed.add_field(
+                name="NOTE", value="**Make sure this is turned on so that the bot is able to DM you!**", inline=True)
+            embed.set_image(
+                url="https://support.discord.com/hc/article_attachments/360062973031/Screen_Shot_2020-07-24_at_10.46.47_AM.png")
             embed.set_footer(text="Embed Support for Discord errors")
-            await ctx.send(user.mention,embed=embed)
-    
-    @bot.command(name = "help")
+            await ctx.send(user.mention, embed=embed)
+
+    @bot.command(name="help")
     async def support(ctx):
-        #Set a default embed first
+        # Set a default embed first
         current = 0
         mainMessage = await ctx.reply(
             "**Support has arrived!**",
-            embed = helpList[current],
-            components = [
+            embed=helpList[current],
+            components=[
                 [
                     Button(
-                        label = "Prev",
-                        id = "back",
-                        style = ButtonStyle.blue
+                        label="Prev",
+                        id="back",
+                        style=ButtonStyle.blue
                     ),
                     Button(
-                        label = f"Page {int(helpList.index(helpList[current])) + 1}/{len(helpList)}",
-                        id = "cur",
-                        style = ButtonStyle.grey,
-                        disabled = True
+                        label=f"Page {int(helpList.index(helpList[current])) + 1}/{len(helpList)}",
+                        id="cur",
+                        style=ButtonStyle.grey,
+                        disabled=True
                     ),
                     Button(
-                        label = "Next",
-                        id = "front",
-                        style = ButtonStyle.blue
+                        label="Next",
+                        id="front",
+                        style=ButtonStyle.blue
                     )
                 ]
             ]
         )
 
         while True:
-            #Try and except blocks to catch timeout and break
+            # Try and except blocks to catch timeout and break
             try:
                 interaction = await bot.wait_for(
                     "button_click",
-                    check = lambda i: i.component.id in ["back", "front"],
-                    timeout = 60                                                #60 seconds of inactivity
+                    check=lambda i: i.component.id in ["back", "front"],
+                    timeout=60  # 60 seconds of inactivity
                 )
-                #Getting the right list index
+                # Getting the right list index
                 if interaction.component.id == "back":
                     current -= 1
                 elif interaction.component.id == "front":
                     current += 1
-                #If its out of index, go back to start / end
+                # If its out of index, go back to start / end
                 if current == len(helpList):
                     current = 0
                 elif current < 0:
                     current = len(helpList) - 1
 
-                #Edit to new page + the center counter
+                # Edit to new page + the center counter
                 await interaction.respond(
-                    type = InteractionType.UpdateMessage,
-                    embed = helpList[current],
-                    components = [ 
+                    type=7,
+                    embed=helpList[current],
+                    components=[
                         [
                             Button(
-                                label = "Prev",
-                                id = "back",
-                                style = ButtonStyle.blue
+                                label="Prev",
+                                id="back",
+                                style=ButtonStyle.blue
                             ),
                             Button(
-                                label = f"Page {int(helpList.index(helpList[current])) + 1}/{len(helpList)}",
-                                id = "cur",
-                                style = ButtonStyle.grey,
-                                disabled = True
+                                label=f"Page {int(helpList.index(helpList[current])) + 1}/{len(helpList)}",
+                                id="cur",
+                                style=ButtonStyle.grey,
+                                disabled=True
                             ),
                             Button(
-                                label = "Next",
-                                id = "front",
-                                style = ButtonStyle.blue
+                                label="Next",
+                                id="front",
+                                style=ButtonStyle.blue
                             )
                         ]
                     ]
                 )
             except asyncio.TimeoutError:
-                #Disable and get outta here
+                # Disable and get outta here
                 await mainMessage.edit("*This interaction has expired now*",
-                    components = [
-                        [
-                            Button(
-                                label = "Prev",
-                                id = "back",
-                                style = ButtonStyle.blue,
-                                disabled = True
-                            ),
-                            Button(
-                                label = f"Page {int(helpList.index(helpList[current])) + 1}/{len(helpList)}",
-                                id = "cur",
-                                style = ButtonStyle.grey,
-                                disabled = True
-                            ),
-                            Button(
-                                label = "Next",
-                                id = "front",
-                                style = ButtonStyle.blue,
-                                disabled = True
-                            )
-                        ]
-                    ]
-                )
+                                       components=[
+                                           [
+                                               Button(
+                                                   label="Prev",
+                                                   id="back",
+                                                   style=ButtonStyle.blue,
+                                                   disabled=True
+                                               ),
+                                               Button(
+                                                   label=f"Page {int(helpList.index(helpList[current])) + 1}/{len(helpList)}",
+                                                   id="cur",
+                                                   style=ButtonStyle.grey,
+                                                   disabled=True
+                                               ),
+                                               Button(
+                                                   label="Next",
+                                                   id="front",
+                                                   style=ButtonStyle.blue,
+                                                   disabled=True
+                                               )
+                                           ]
+                                       ]
+                                       )
                 break
 
-    #very bad implementaion, code just works tho
+    # very bad implementaion, code just works tho
     @bot.command(name='fetch')
     async def fetch(ctx):
         listOfAllTracks = ["sample"]
         currentPgQueueMessage = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-        lastMessage = ctx.message                                                       # getting the last message ("qr fetch")
-        userName = lastMessage.author                                                   # user who invoked the command
-        guildName = lastMessage.guild                                                   # server on which the command was invoked
-        queueMessageID = currentPgQueueMessage.id                                       # ID of the queue message
+        # getting the last message ("qr fetch")
+        lastMessage = ctx.message
+        # user who invoked the command
+        userName = lastMessage.author
+        # server on which the command was invoked
+        guildName = lastMessage.guild
+        # ID of the queue message
+        queueMessageID = currentPgQueueMessage.id
 
         pageNumber = 1
         while True:
@@ -258,15 +203,20 @@ def main():
                 return 0
             time.sleep(0.5)
             currentPgQueueMessage = await ctx.fetch_message(queueMessageID)
-            currentPgQueueMessageContent = currentPgQueueMessage.content                       # fetch msg
-            #print(currentPgQueueMessageContent)
+            # fetch msg
+            currentPgQueueMessageContent = currentPgQueueMessage.content
+            # print(currentPgQueueMessageContent)
             currentPgListOfAllTracks = currentPgQueueMessageContent.split("\n")
             # print(currentPgListOfAllTracks)
             currentPgListOfAllTracks.pop()              # removing the last element ("```")
-            currentPgListOfAllTracks.pop(0)             # removing the first element ("```nim")
-            lastSentence = currentPgListOfAllTracks[-1].strip()     # Important as we check if we have reached the end or not
-            currentPgListOfAllTracks.pop()                          # removing the last element
-            itemIndexWhereLeftIs = None                    # this variable is to get rid of the "left" thing
+            # removing the first element ("```nim")
+            currentPgListOfAllTracks.pop(0)
+            # Important as we check if we have reached the end or not
+            lastSentence = currentPgListOfAllTracks[-1].strip()
+            # removing the last element
+            currentPgListOfAllTracks.pop()
+            # this variable is to get rid of the "left" thing
+            itemIndexWhereLeftIs = None
             for item in currentPgListOfAllTracks:
                 if "current track" in item:
                     currentPgListOfAllTracks.remove(item)
@@ -276,11 +226,12 @@ def main():
                     itemIndexWhereLeftIs = currentPgListOfAllTracks.index(item)
 
             if type(itemIndexWhereLeftIs) == int:
-                currentPgListOfAllTracks[itemIndexWhereLeftIs] = currentPgListOfAllTracks[itemIndexWhereLeftIs].strip().rstrip("left")  # removing the "left"
+                currentPgListOfAllTracks[itemIndexWhereLeftIs] = currentPgListOfAllTracks[itemIndexWhereLeftIs].strip(
+                ).rstrip("left")  # removing the "left"
             formattedMessage = "\n".join(currentPgListOfAllTracks).strip()
 
-
-            if formattedMessage == listOfAllTracks[-1]:  # if the current message is same as last, we dont add this in the queuepages
+            # if the current message is same as last, we dont add this in the queuepages
+            if formattedMessage == listOfAllTracks[-1]:
                 continue
             else:
                 # See if this page is the last page, if yes, break
@@ -327,7 +278,7 @@ def main():
         textFileAttachment = queueFile.attachments[0]
         messageFile = await textFileAttachment.read()
         messageContent = messageFile.decode("utf-8").strip()
-        user=ctx.author
+        user = ctx.author
 
         listOfListOfTrackInfo = splitQueueFile(messageContent)
 
@@ -341,41 +292,48 @@ def main():
 
         # Get credentials and create an API client
 
-        flow = Flow.from_client_secrets_file(client_secrets_file, scopes, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+        flow = Flow.from_client_secrets_file(
+            client_secrets_file, scopes, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
         auth_url = flow.authorization_url()
-        
-        stringo=auth_url[0]
-        embed = discord.Embed(title="OAuth Verification Embed", description="Please go to the following URL:",color=0x34A853) 
-        embed.add_field(name="OAuth Link", value="[Click Here]({})".format(stringo))
-        embed.add_field(name="Instructions", value="Sign-In to your Google Account and paste the token here (obtained after authorising the bot to modify your Youtube data)")
-        embed.add_field(name="Made a mistake?", value="Type `cancel` to invalidate the OAuth process.")
+
+        stringo = auth_url[0]
+        embed = discord.Embed(title="OAuth Verification Embed",
+                              description="Please go to the following URL:", color=0x34A853)
+        embed.add_field(name="OAuth Link",
+                        value="[Click Here]({})".format(stringo))
+        embed.add_field(
+            name="Instructions", value="Sign-In to your Google Account and paste the token here (obtained after authorising the bot to modify your Youtube data)")
+        embed.add_field(name="Made a mistake?",
+                        value="Type `cancel` to invalidate the OAuth process.")
         embed.set_footer(text="OAuth Embed generated for {}".format(user))
-        
+
         try:
             await user.send(embed=embed)
             await ctx.send("{} check your DMs!".format(user.mention))
-            def check(mssg):
-                return mssg.author==ctx.message.author
 
+            def check(mssg):
+                return mssg.author == ctx.message.author
 
             while True:
-                msg = await bot.wait_for("message",check=check)
-                if 'cancel' in  msg.content.lower():
+                msg = await bot.wait_for("message", check=check)
+                if 'cancel' in msg.content.lower():
                     await user.send("Cancelling request")
                     return 0
                 time.sleep(0.5)
                 codeMessage = msg.content
                 break
 
-        except discord.errors.Forbidden: #check if DM Closed
-            embed = discord.Embed(title="UH OH!", description="Looks like I'm unable to send you a Direct Message :(",color=0xFF0000) 
-            embed.add_field(name="NOTE",value="**Make sure this is turned on so that the bot is able to DM you!**",inline=True)
-            embed.set_image(url="https://support.discord.com/hc/article_attachments/360062973031/Screen_Shot_2020-07-24_at_10.46.47_AM.png")
+        except discord.errors.Forbidden:  # check if DM Closed
+            embed = discord.Embed(
+                title="UH OH!", description="Looks like I'm unable to send you a Direct Message :(", color=0xFF0000)
+            embed.add_field(
+                name="NOTE", value="**Make sure this is turned on so that the bot is able to DM you!**", inline=True)
+            embed.set_image(
+                url="https://support.discord.com/hc/article_attachments/360062973031/Screen_Shot_2020-07-24_at_10.46.47_AM.png")
             embed.set_footer(text="Embed Support for Discord errors")
-            await ctx.send(user.mention,embed=embed)
-    
-        
+            await ctx.send(user.mention, embed=embed)
+
         async with ctx.typing():
 
             flow.fetch_token(code=codeMessage)
@@ -408,7 +366,8 @@ def main():
 
             # ======== Searching and adding the songs to the playlist =========
 
-            for listOfTrackinfo in listOfListOfTrackInfo[::-1]:   # Reversing the list cuz yt displays videos in "date added (newest)" form
+            # Reversing the list cuz yt displays videos in "date added (newest)" form
+            for listOfTrackinfo in listOfListOfTrackInfo[::-1]:
 
                 # ======== Searching ========
                 songNameAndArtist = listOfTrackinfo[1]
@@ -441,10 +400,10 @@ def main():
                 playlistURL = "https://www.youtube.com/playlist?list=" + playlistID
 
                 message = "The playlist URL is: " + playlistURL
-        
-            
-        await ctx.send(message)
 
+        await ctx.send(message)
     bot.run(DISCORD_TOKEN)
+
+
 if __name__ == '__main__':
     main()

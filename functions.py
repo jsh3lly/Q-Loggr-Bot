@@ -16,8 +16,3 @@ def splitQueueFile(queueFileText):      # Returns listOfListOfTrackInfo
 
 
 
-# a = splitQueueFile("""1) Lynyrd Skynyrd - Free Bird       5:45
-# 2) Tom Petty - Runnin' Down A Dream 4:23""")
-#
-# print(a)
-

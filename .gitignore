@@ -1,9 +1,10 @@
 __pycache__/
+cogs/__pycache__
 .idea
 .env
+Pipfile.lock
 queueFile*
 client_secret*
 google-credentials.json
 yt.py
 test-code
-google-credentials.json
